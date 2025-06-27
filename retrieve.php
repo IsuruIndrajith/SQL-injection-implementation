@@ -11,22 +11,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id = trim($_POST['id']);
     $name = trim($_POST['name']);
 
-// trim to remove whitespace
-
-
     // Simple validation
     if (!is_numeric($id) || empty($name)) {
         $error = "Please enter a valid numeric ID and a name.";
     } else {
-        // Step 2: Unsafe SQL query directly with user input
-        // ⚠️ THIS IS VULNERABLE TO SQL INJECTION
-        $query = "SELECT * FROM user_table WHERE id = $id AND name = '$name'";
-        $result = mysqli_query($conn, $query); // Execute the query(make the query)
-        // result is the result of the query(an object)
+        // Step 2: Query DB with both ID and Name
+        $stmt = $conn->prepare("SELECT * FROM user_table WHERE id = ? AND name = ?");
+        $stmt->bind_param("is", $id, $name);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-
-        if ($result && mysqli_num_rows($result) > 0) {  //how many rows are returned
-            // Step 3: Fetch the user data
+        if ($result && mysqli_num_rows($result) > 0) {
             $user = mysqli_fetch_assoc($result);
         } else {
             $error = "No matching user found with ID $id and name '$name'.";
